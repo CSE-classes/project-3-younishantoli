@@ -72,10 +72,47 @@ int readf(FILE *fp)
 void *sub_string(void *threadid) 	/*each process searches in the string with the step of nprocs until it reach or beyond*/ 
 	/*the (n1-n2)th char which is the last possible beginning of the substring*/
 {
+int id; //this is what thread we're on 
+int start, end; //this is where the thread's on the string
+int i, j, k, count; //this keeps count and declares the variables for the loops (was declared early in the code; like the example
+int totalOfLocal = 0; //each thread's total matches basically and initialize at 0
 
+id = (int)threadid; //this is turning the parameter thread's id and turning it into int type
+start = id * nlocal;
+end = start + nlocal - 1;
+//these two (start and end) get the range of the thread
+
+if(id == NUM_THREADS - 1) { //in the sequenctial code, we are told basically that the max is (n1 - n2) 
+	end = n1 - n2;
 }
 
+if(end > n1 - n2) { //keeps it in the bound
+	end = n1 - n2;
+}
 
+for(int i = start; i <= end; i++) { 
+	count = 0; //initialize count as 0
+
+	for(j = i, k = 0; k < n2; j++, k++) { //this is the same as the sequential
+		if(*(s1 + j) != *(s2 + k)){
+			break;
+		} else {
+			count++;
+		}
+
+		if(count == n2) {
+			totalOfLocal++;
+		}
+	}
+}
+
+pthread_mutex_lock(&total_lock); //here we basically are 'locking the total'
+total = total + totalOfLocal; //then add the total of the thread
+pthread_mutex_unlock(&total_lock); //'unlock the total' so that the other threads can add
+				   //basically lock -> add total -> unlock for next
+
+pthread_exit(NULL);
+}
 
 
 
